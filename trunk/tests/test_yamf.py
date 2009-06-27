@@ -150,6 +150,13 @@ class TestReturnValue(unittest.TestCase):
 
         self.assertEquals(m.method(), 1)
         m.verify()
+        
+    def testReturnValueWithExpectationCount(self):
+        m = Mock()
+        m.method.mustBeCalled.once.returns(1)
+
+        self.assertEquals(m.method(), 1)
+        m.verify()
 
     def testReturnValueWithExpectationArgs(self):
         m = Mock()
@@ -165,6 +172,7 @@ class TestExecuting(unittest.TestCase):
         executed = []
         def method(a,b):
             executed.append(True)
+            
         m.method.execute(method)
         m.method(1,2)
         self.assertEquals(executed, [True])
