@@ -1,7 +1,14 @@
+import types
+
 class MockModule(object):
-    
-    def __init__(self, moduleName):
-        self._module = __import__(moduleName, globals(), locals(), [], -1)
+    """For mocking module"""
+        
+    def __init__(self, moduleNameOrModule):
+        """Module can be given as string or the module itself"""
+        if type(moduleNameOrModule) is types.StringType:
+            self._module = __import__(moduleNameOrModule, globals(), locals(), [], -1)
+        else:
+            self._module = moduleNameOrModule
         self._mock = Mock()
 
     def __getattr__(self, name):

@@ -192,6 +192,12 @@ class TestMockingModule(unittest.TestCase):
         import os
         self.assertEquals(os.getcwd(), 'abc123')
         
+    def testMockingWithSetting(self):   
+        import os
+        m = MockModule(os)
+        m.getcwd.returns('test')
+        self.assertEquals(os.getcwd(), 'test')
+        
 
 if __name__ == '__main__':
     unittest.main()
