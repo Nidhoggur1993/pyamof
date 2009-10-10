@@ -1,8 +1,9 @@
 import sys
-sys.path.insert(0, '../yamf')
+import os
+sys.path.insert(0, os.path.pardir)
 
 import unittest
-from yamf import Mock, MockModule
+from yamf import Mock, MockModule,MockMethod
 
 class TestMethodCallExpectations(unittest.TestCase):
 
@@ -169,13 +170,13 @@ class TestExecuting(unittest.TestCase):
         
     def testExecuting(self):
         m = Mock()
-        executed = []
+        self.executed = False
         def method(a,b):
-            executed.append(True)
+            self.executed = True
             
         m.method.execute(method)
         m.method(1,2)
-        self.assertEquals(executed, [True])
+        self.assertTrue(self.executed)
 
 class TestMockingModule(unittest.TestCase):
 
@@ -197,6 +198,19 @@ class TestMockingModule(unittest.TestCase):
         m = MockModule(os)
         m.getcwd.returns('test')
         self.assertEquals(os.getcwd(), 'test')
+
+class TestMockMethod(unittest.TestCase):
+
+    def testMockMethodCalled(self):
+        method = MockMethod()
+        method.mustBeCalled
+        method()
+        method.verify()
+
+    def testMockMethodNotCalled(self):
+        method = MockMethod()
+        method.mustBeCalled
+        self.assertRaises(AssertionError, method.verify)
         
 
 if __name__ == '__main__':

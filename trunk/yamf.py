@@ -25,7 +25,7 @@ class Mock(object):
         self._mockMethods = {}
 
     def verify(self):
-        map(lambda method: method.mockVerify(), self._mockMethods.values())
+        map(lambda method: method.verify(), self._mockMethods.values())
 
     def __getattr__(self, name):
         if name not in self._mockMethods:
@@ -124,12 +124,12 @@ class CallNotExpected(object):
 
 class MockMethod(object):
     
-    def __init__(self, methodName):
+    def __init__(self, methodName=None):
         self.mockMethodName = methodName
         self.mockExpectations = []
         self.mockMethodCallable = None
 
-    def mockVerify(self):
+    def verify(self):
         map(lambda expectation: expectation.mockVerify(), self.mockExpectations)
 
     def mockSetReturnValue(self, value):
