@@ -211,6 +211,36 @@ class TestMockMethod(unittest.TestCase):
         method = MockMethod()
         method.mustBeCalled
         self.assertRaises(AssertionError, method.verify)
+
+class TestCallHistory(unittest.TestCase):
+    
+    def testNoCalls(self):
+        m = Mock()
+        self.assertEquals(m.method.history, [])
+
+    def testCallWithoutArguments(self):
+        m = Mock()
+        m.method()
+        self.assertEquals(m.method.history, [((),{})])
+
+    def testManyCallsWithoutArguments(self):
+        m = Mock()
+        m.method()
+        m.method()
+        self.assertEquals(m.method.history, [((), {}),((), {})])
+
+    def testCallWithArguments(self):
+        m = Mock()
+        m.method(1, 2, k=1, j=2)
+        self.assertEquals(m.method.history, [((1, 2), {'k':1, 'j':2})])
+
+    def testManyCallsWithArguments(self):
+        m = Mock()
+        m.method(1, 2, k=1, j=2)
+        m.method(3, 4, k=3, j=4)
+        self.assertEquals(m.method.history, [((1, 2), {'k':1, 'j':2}),\
+                                             ((3, 4), {'k':3, 'j':4})])
+        
         
 
 if __name__ == '__main__':

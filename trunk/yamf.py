@@ -20,7 +20,7 @@ class MockModule(object):
         self._mock.verify()
 
 class Mock(object):
-
+    
     def __init__(self):
         self._mockMethods = {}
 
@@ -128,6 +128,7 @@ class MockMethod(object):
         self.mockMethodName = methodName
         self.mockExpectations = []
         self.mockMethodCallable = None
+        self.mockArgumentHistory = []
 
     def verify(self):
         map(lambda expectation: expectation.mockVerify(), self.mockExpectations)
@@ -151,13 +152,14 @@ class MockMethod(object):
             return self.mockSetReturnValue
         elif name == 'execute':
             return self.mockMethodToBeCalled
+        elif name == 'history':
+            return self.mockArgumentHistory
 
     def __call__(self, *args, **kwargs):
+        self.mockArgumentHistory.append((args,kwargs))
         for expectation in self.mockExpectations:
             expectation(*args, **kwargs)
-            #if expectation.mockIsOk():
-            #    self.mockExpectations.remove(expectation)
-            #    break
+
         if self.mockMethodCallable:
             self.mockMethodCallable(*args, **kwargs)
         return self.returnValue
