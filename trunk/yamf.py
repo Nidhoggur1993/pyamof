@@ -20,21 +20,28 @@ class MockModule(object):
         self._mock.verify()
 
 class Mock(object):
+    """Mock object"""
     
     def __init__(self):
         self._mockMethods = {}
 
     def verify(self):
+        """Verifies that all expectation are met. Raises exception
+           when expectations are not met."""
         map(lambda method: method.verify(), self._mockMethods.values())
 
     def __getattr__(self, name):
         if name not in self._mockMethods:
-            mockMethod = MockMethod(name)
-            self._mockMethods[name] = mockMethod
+            self._createMockMethod(name)
         return self._mockMethods[name]
 
     def __call__(self, *args, **kwargs):
         return self
+
+    def _createMockMethod(self, name):
+        mockMethod = MockMethod(name)
+        self._mockMethods[name] = mockMethod
+    
         
 class CallExpectation(object):
     
@@ -127,7 +134,7 @@ class MockMethod(object):
     def __init__(self, methodName=None):
         self.mockMethodName = methodName
         self.mockExpectations = []
-        self.mockMethodCallable = None
+        self.mockMethodCallable = self._nullCallable
         self.mockArgumentHistory = []
 
     def verify(self):
@@ -141,13 +148,9 @@ class MockMethod(object):
 
     def __getattr__(self,name):
         if name == 'mustBeCalled':
-            expectation = CallExpectation(self)
-            self.mockExpectations.append(expectation)
-            return expectation
+            return self._addExpectation(CallExpectation)          
         elif name == 'mustNotBeCalled':
-            expectation = CallNotExpected(self)
-            self.mockExpectations.append(expectation)
-            return expectation
+            return self._addExpectation(CallNotExpected)
         elif name == 'returns':
             return self.mockSetReturnValue
         elif name == 'execute':
@@ -160,6 +163,13 @@ class MockMethod(object):
         for expectation in self.mockExpectations:
             expectation(*args, **kwargs)
 
-        if self.mockMethodCallable:
-            self.mockMethodCallable(*args, **kwargs)
+        self.mockMethodCallable(*args, **kwargs)
         return self.returnValue
+
+    def _addExpectation(self, expectation):
+        expectation = expectation(self)
+        self.mockExpectations.append(expectation)
+        return expectation
+
+    def _nullCallable(self, *args, **kwargs):
+        pass
