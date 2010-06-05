@@ -41,13 +41,18 @@ class Mock(object):
     def _createMockMethod(self, name):
         mockMethod = MockMethod(name)
         self._mockMethods[name] = mockMethod
-    
-        
-class CallExpectation(object):
-    
+  
+class Expectation(object):
+    """Base class for expectation classes"""
     def __init__(self, mockMethod):
         self.mockIsCalled = False
-        self.mockMethod = mockMethod
+        self.mockMethod = mockMethod      
+
+
+class CallExpectation(Expectation):
+    
+    def __init__(self, mockMethod):
+        Expectation.__init__(self, mockMethod)
         self.mockExpectedArgs = None
         self.mockExpectedKwargs = None
         self.mockExpectedCallCount = None
@@ -109,11 +114,10 @@ class CallExpectation(object):
         self.mockIsCalled = True
         self.mockReceivedCalls += 1
 
-class CallNotExpected(object):
+class CallNotExpected(Expectation):
     
     def __init__(self, mockMethod):
-        self.mockIsCalled = False
-        self.mockMethod = mockMethod
+        Expectation.__init__(self, mockMethod)
 
     def mockVerify(self):   
         assert not self.mockIsCalled, "Method %s was called" % (self.mockMethod.mockMethodName)
