@@ -63,11 +63,11 @@ class CallExpectation(object):
     def mockSetExpectedArgs(self, *args, **kwargs):
         self.mockExpectedArgs = args
         self.mockExpectedKwargs = kwargs
-        return self.mockMethod
+        return self
 
     def mockSetExpectedCallCount(self, count):
         self.mockExpectedCallCount = count
-        return self.mockMethod
+        return self
 
     def mockVerifyCallCount(self):
         assert 'FAILURE: verify call count not set'

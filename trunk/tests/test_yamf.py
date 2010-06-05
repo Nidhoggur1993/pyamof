@@ -82,6 +82,22 @@ class TestMethodCallExpectations(unittest.TestCase):
         m.method(5)
         self.assertRaises(AssertionError, m.verify)
 
+    def testExpectingManyCallsWithSameArgsFails(self):
+        m = Mock()
+        m.method.mustBeCalled.withArgs(5).times(2)
+    
+        m.method(5)
+        m.method(6)
+        self.assertRaises(AssertionError, m.verify)
+
+    def testExpectingManyCallsWithSameArgsOk(self):
+        m = Mock()
+        m.method.mustBeCalled.withArgs(5).times(2)
+    
+        m.method(5)
+        m.method(5)
+        m.verify()
+
     def testExpectingManyCallsFails(self):
         m = Mock()
         m.method.mustBeCalled.times(3)
