@@ -9,7 +9,7 @@ setup(name='yamf',
       platforms=['OS independent'],
       description='A Python (yet another) mock framework',
       url = 'http://code.google.com/p/pyamof/',
-      download_url = 'http://code.google.com/p/pyamof/downloads/detail?name=pyamof-0.6.tar.gz&can=2&q=',
+      download_url = 'http://code.google.com/p/pyamof/downloads/detail?name=yamf-0.6.tar.gz&can=2&q=',
       keywords = ['mock', 'tdd'],
       classifiers = [
         'Programming Language :: Python',
