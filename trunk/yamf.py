@@ -1,4 +1,5 @@
 import types
+  
 
 class MockModule(object):
     """For mocking module"""
@@ -28,20 +29,60 @@ class Mock(object):
     def verify(self):
         """Verifies that all expectation are met. Raises exception
            when expectations are not met."""
-        map(lambda method: method.verify(), self._mockMethods.values())
+        [method.verify() for method in self._mockMethods.values()]
 
     def __getattr__(self, name):
+        return self._getMockMethod(name)
+        
+    def __call__(self, *args, **kwargs):
+        return self
+    
+    def _getMockMethod(self, name):    
         if name not in self._mockMethods:
             self._createMockMethod(name)
         return self._mockMethods[name]
 
-    def __call__(self, *args, **kwargs):
-        return self
-
     def _createMockMethod(self, name):
         mockMethod = MockMethod(name)
         self._mockMethods[name] = mockMethod
-  
+        
+class Proxy(object):
+    
+    def __init__(self, subjects):
+        self.subjects = subjects
+        
+    def __getattr__(self, name):
+        newSubjects = [subject.__getattr__(name) for subject in self.subjects]
+        return Proxy(newSubjects)
+        
+    def __call__(self, *args, **kwargs):
+        [subject(*args, **kwargs) for subject in self.subjects]
+        
+class MockArray(Mock):
+    "Array of same mock objects"
+    
+    def __init__(self, numberOfMocks):
+        Mock.__init__(self)
+        assert numberOfMocks > 0, "Mock count must be > 0"
+        self._mocks = [Mock() for i in range(numberOfMocks)]
+        
+    def __getitem__(self, index):
+        if index > len(self):
+            raise IndexError()
+        return self._mocks[index]
+        
+    def __len__(self):
+        return len(self._mocks)
+        
+    def __getattr__(self, name):
+        return Proxy([mock.__getattr__(name) for mock in self._mocks])
+
+    def __call__(self, *args, **kwargs):
+        return Proxy(self._mocks)
+        
+    def verify(self):
+        for mock in self._mocks: mock.verify()
+        
 class Expectation(object):
     """Base class for expectation classes"""
     def __init__(self, mockMethod):
@@ -90,6 +131,7 @@ class CallExpectation(Expectation):
                     % (self.mockMethod.mockMethodName, self.mockReceivedCalls, self.mockExpectedCallCount)
 
     def __getattr__(self,name):
+
         if name == 'withArgs':
             return self.mockSetExpectedArgs
         elif name == 'once':

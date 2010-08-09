@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.pardir)
 
 import unittest
-from yamf import Mock, MockModule,MockMethod
+from yamf import Mock, MockModule, MockArray
 
 class TestMethodCallExpectations(unittest.TestCase):
 
@@ -215,18 +215,7 @@ class TestMockingModule(unittest.TestCase):
         m.getcwd.returns('test')
         self.assertEquals(os.getcwd(), 'test')
 
-class TestMockMethod(unittest.TestCase):
 
-    def testMockMethodCalled(self):
-        method = MockMethod()
-        method.mustBeCalled
-        method()
-        method.verify()
-
-    def testMockMethodNotCalled(self):
-        method = MockMethod()
-        method.mustBeCalled
-        self.assertRaises(AssertionError, method.verify)
 
 class TestCallHistory(unittest.TestCase):
     
@@ -256,8 +245,51 @@ class TestCallHistory(unittest.TestCase):
         m.method(3, 4, k=3, j=4)
         self.assertEquals(m.method.history, [((1, 2), {'k':1, 'j':2}),\
                                              ((3, 4), {'k':3, 'j':4})])
+                                            
+class TestMockArray(unittest.TestCase):
+    
+    def testInvalidConstruction(self):
+        self.assertRaises(AssertionError, MockArray, 0)
         
+    def testOneMockWithExpectationsMet(self):
+        mocks = MockArray(1)
+        mocks.method.mustBeCalled
         
+        mocks[0].method()
+        
+        mocks.verify()
+        
+    def testManyMocksWithExpectationsMet(self):
+        mocks = MockArray(5)
+        mocks.method.mustBeCalled
+        
+        [mock.method() for mock in mocks]
+        
+        mocks.verify()
+        
+    def testOneMockExpectationNotMet(self):
+        mocks = MockArray(2)
+        mocks.method.mustBeCalled
+        
+        mocks[1].method()
+        self.assertRaises(AssertionError, mocks.verify)      
+        
+    def testCallCountFails(self): 
+        mocks = MockArray(4)
+        mocks.method.mustBeCalled.times(5)
+        
+        for mock in mocks: mock.method() 
+        
+        self.assertRaises(AssertionError, mocks.verify)      
+
+    def testCallCountOk(self): 
+        mocks = MockArray(4)
+        mocks.method.mustBeCalled.times(2)
+        
+        for mock in mocks: mock.method() 
+        for mock in mocks: mock.method() 
+        
+        mocks.verify()
 
 if __name__ == '__main__':
     unittest.main()
