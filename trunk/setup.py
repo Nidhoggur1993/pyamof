@@ -13,7 +13,7 @@ setup(name='yamf',
       keywords = ['mock', 'tdd'],
       classifiers = [
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.x',
+        'Programming Language :: Python :: 2.6',
         'Development Status :: 4 - Beta',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
