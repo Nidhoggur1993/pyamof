@@ -126,32 +126,60 @@ class AtLeastCallCountExpectation(CallCountExpectation):
                    self.mockExpectedCallCount)
 
 
-class CallExpectation(Expectation):
-    #TODO: Extract argument expectation
-       
-    def __init__(self, mockMethod):
+class ArgumentExpectationBase(Expectation):
+    
+    def __init__(self, mockMethod, parentExpectation):
         Expectation.__init__(self, mockMethod)
+        self.parentExpectation = parentExpectation
         self.mockExpectedArgs = None
         self.mockExpectedKwargs = None
-        self.mockCallCountExpectation = None # TODO: NULL object
 
-    def mockVerify(self):   
-        assert self.mockIsCalled, 'Method %s(%s,%s) was not called' \
-            % (self.mockMethod.mockMethodName, self.mockExpectedArgs, \
-               self.mockExpectedKwargs)
-        
-        if self.mockCallCountExpectation:
-            self.mockCallCountExpectation.mockVerify()
+class ArgumentExpectation(ArgumentExpectationBase):
+    
+    def __init__(self, mockMethod, parentExpectation):
+        ArgumentExpectationBase.__init__(self, mockMethod, parentExpectation)
 
     def mockSetExpectedArgs(self, *args, **kwargs):
         self.mockExpectedArgs = args
         self.mockExpectedKwargs = kwargs
-        return self
+        return self.parentExpectation
+
+    def isExpectedArgs(self, *args, **kwargs):
+        if self.mockExpectedArgs:
+            if self.mockExpectedArgs != args:
+                return False
+        if self.mockExpectedKwargs:
+            if self.mockExpectedKwargs != kwargs:
+                return False
+        return True
+
+class NoArgumentsExpectation(ArgumentExpectationBase):
+
+    def __init__(self, mockMethod, parentExpectation):
+        ArgumentExpectationBase.__init__(self, mockMethod, parentExpectation)
+    
+    def isExpectedArgs(self, *args, **kwargs):
+        return True
+
+class CallExpectation(Expectation):
+       
+    def __init__(self, mockMethod):
+        Expectation.__init__(self, mockMethod)
+        self.mockArgExpectation = NoArgumentsExpectation(self.mockMethod, self)
+        self.mockCallCountExpectation = None # TODO: NULL object
+
+    def mockVerify(self):   
+        assert self.mockIsCalled, 'Method %s(%s,%s) was not called' \
+            % (self.mockMethod.mockMethodName, self.mockArgExpectation.mockExpectedArgs, \
+               self.mockArgExpectation.mockExpectedKwargs)
+        
+        if self.mockCallCountExpectation:
+            self.mockCallCountExpectation.mockVerify()
 
     def __getattr__(self,name):
-
         if name == 'withArgs':
-            return self.mockSetExpectedArgs
+            self.mockArgExpectation = ArgumentExpectation(self.mockMethod, self) 
+            return self.mockArgExpectation.mockSetExpectedArgs
         elif name == 'once':
             self.mockCallCountExpectation = ExactCallCountExpectation(self.mockMethod, self)
             return self.mockCallCountExpectation.mockSetExpectedCallCount(1)
@@ -166,15 +194,10 @@ class CallExpectation(Expectation):
             return self.mockMethod.__getattr__(name)
 
     def __call__(self, *args, **kwargs):
-        if self.mockExpectedArgs:
-            if self.mockExpectedArgs != args:
-                return
-        if self.mockExpectedKwargs:
-            if self.mockExpectedKwargs != kwargs:
-                return
-        self.mockIsCalled = True
-        if self.mockCallCountExpectation:
-            self.mockCallCountExpectation.mockReceivedCalls += 1
+        if self.mockArgExpectation.isExpectedArgs(*args, **kwargs):              
+            self.mockIsCalled = True
+            if self.mockCallCountExpectation:
+                self.mockCallCountExpectation.mockReceivedCalls += 1
 
 class CallNotExpected(Expectation):
     
