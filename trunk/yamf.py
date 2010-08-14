@@ -185,8 +185,8 @@ class CallNotExpected(Expectation):
         assert not self.mockIsCalled, "Method %s was called" % \
             (self.mockMethod.mockMethodName)
 
-    def mockIsOk(self):
-        return not self.mockIsCalled
+    """def mockIsOk(self):
+        return not self.mockIsCalled"""
 
     def __getattr__(self,name):
         return self.mockMethod.__getattr__(name)
