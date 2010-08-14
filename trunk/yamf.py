@@ -87,63 +87,82 @@ class Expectation(object):
     """Base class for expectation classes"""
     def __init__(self, mockMethod):
         self.mockIsCalled = False
-        self.mockMethod = mockMethod      
+        self.mockMethod = mockMethod   
+
+class CallCountExpectation(Expectation):
+    "Call count verification base class"
+
+    # TODO: Can we get rid of parent expectation?
+    def __init__(self, mockMethod, parentExpection):
+        Expectation.__init__(self, mockMethod)
+        self.mockExpectedCallCount = None
+        self.mockReceivedCalls = 0
+        self.parentExpectation = parentExpection
+
+    def mockSetExpectedCallCount(self, count):
+        self.mockExpectedCallCount = count
+        return self.parentExpectation
+
+class ExactCallCountExpectation(CallCountExpectation):
+           
+    def __init__(self, mockMethod, parentExpectation):
+        CallCountExpectation.__init__(self, mockMethod, parentExpectation)
+
+    def mockVerify(self):
+        assert self.mockReceivedCalls == self.mockExpectedCallCount, \
+            'Method %s was called %d times, but expectations was %d times' \
+                % (self.mockMethod.mockMethodName, self.mockReceivedCalls, \
+                   self.mockExpectedCallCount)
+
+class AtLeastCallCountExpectation(CallCountExpectation):
+
+    def __init__(self, mockMethod, parentExpectation):
+        CallCountExpectation.__init__(self, mockMethod, parentExpectation)
+
+    def mockVerify(self):
+        assert self.mockReceivedCalls >= self.mockExpectedCallCount, \
+            'Method %s was called %d times, but expectations was at least %d times' \
+                % (self.mockMethod.mockMethodName, self.mockReceivedCalls, \
+                   self.mockExpectedCallCount)
 
 
 class CallExpectation(Expectation):
-    
+    #TODO: Extract argument expectation
+       
     def __init__(self, mockMethod):
         Expectation.__init__(self, mockMethod)
         self.mockExpectedArgs = None
         self.mockExpectedKwargs = None
-        self.mockExpectedCallCount = None
-        self.mockReceivedCalls = 0
+        self.mockCallCountExpectation = None # TODO: NULL object
 
     def mockVerify(self):   
         assert self.mockIsCalled, 'Method %s(%s,%s) was not called' \
-            % (self.mockMethod.mockMethodName, self.mockExpectedArgs,self.mockExpectedKwargs)
+            % (self.mockMethod.mockMethodName, self.mockExpectedArgs, \
+               self.mockExpectedKwargs)
         
-        self.mockVerifyCallCount()
-
+        if self.mockCallCountExpectation:
+            self.mockCallCountExpectation.mockVerify()
 
     def mockSetExpectedArgs(self, *args, **kwargs):
         self.mockExpectedArgs = args
         self.mockExpectedKwargs = kwargs
         return self
 
-    def mockSetExpectedCallCount(self, count):
-        self.mockExpectedCallCount = count
-        return self
-
-    def mockVerifyCallCount(self):
-        assert 'FAILURE: verify call count not set'
-
-    def mockVerifyCallCountExactly(self):
-        if self.mockExpectedCallCount:
-            assert self.mockReceivedCalls == self.mockExpectedCallCount, \
-                'Method %s was called %d times, but expectations was %d times' \
-                    % (self.mockMethod.mockMethodName, self.mockReceivedCalls, self.mockExpectedCallCount)
-
-    def mockVerifyCallCountAtLeast(self):
-        if self.mockExpectedCallCount:
-            assert self.mockReceivedCalls >= self.mockExpectedCallCount, \
-                'Method %s was called %d times, but expectations was at least %d times' \
-                    % (self.mockMethod.mockMethodName, self.mockReceivedCalls, self.mockExpectedCallCount)
-
     def __getattr__(self,name):
 
         if name == 'withArgs':
             return self.mockSetExpectedArgs
         elif name == 'once':
-            self.mockVerifyCallCount = self.mockVerifyCallCountExactly
-            return self.mockSetExpectedCallCount(1)
+            self.mockCallCountExpectation = ExactCallCountExpectation(self.mockMethod, self)
+            return self.mockCallCountExpectation.mockSetExpectedCallCount(1)
         elif name == 'times':
-            self.mockVerifyCallCount = self.mockVerifyCallCountExactly
-            return self.mockSetExpectedCallCount
+            self.mockCallCountExpectation = ExactCallCountExpectation(self.mockMethod, self)
+            return self.mockCallCountExpectation.mockSetExpectedCallCount
         elif name == 'atLeastTimes':
-            self.mockVerifyCallCount = self.mockVerifyCallCountAtLeast
-            return self.mockSetExpectedCallCount
+            self.mockCallCountExpectation = AtLeastCallCountExpectation(self.mockMethod, self)
+            return self.mockCallCountExpectation.mockSetExpectedCallCount
         else:
+            # TODO: Let parent expectation handle the mock method.
             return self.mockMethod.__getattr__(name)
 
     def __call__(self, *args, **kwargs):
@@ -154,7 +173,8 @@ class CallExpectation(Expectation):
             if self.mockExpectedKwargs != kwargs:
                 return
         self.mockIsCalled = True
-        self.mockReceivedCalls += 1
+        if self.mockCallCountExpectation:
+            self.mockCallCountExpectation.mockReceivedCalls += 1
 
 class CallNotExpected(Expectation):
     
@@ -162,7 +182,8 @@ class CallNotExpected(Expectation):
         Expectation.__init__(self, mockMethod)
 
     def mockVerify(self):   
-        assert not self.mockIsCalled, "Method %s was called" % (self.mockMethod.mockMethodName)
+        assert not self.mockIsCalled, "Method %s was called" % \
+            (self.mockMethod.mockMethodName)
 
     def mockIsOk(self):
         return not self.mockIsCalled
