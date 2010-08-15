@@ -85,14 +85,17 @@ class MockArray(Mock):
         
 class Expectation(object):
     """Base class for expectation classes"""
+    
     def __init__(self, mockMethod):
         self.mockIsCalled = False
         self.mockMethod = mockMethod   
 
+    def __getattr__(self,name):
+        return self.mockMethod.__getattr__(name)
+
 class CallCountExpectation(Expectation):
     "Call count verification base class"
 
-    # TODO: Can we get rid of parent expectation?
     def __init__(self, mockMethod, parentExpection):
         Expectation.__init__(self, mockMethod)
         self.mockExpectedCallCount = None
@@ -190,8 +193,7 @@ class CallExpectation(Expectation):
             self.mockCallCountExpectation = AtLeastCallCountExpectation(self.mockMethod, self)
             return self.mockCallCountExpectation.mockSetExpectedCallCount
         else:
-            # TODO: Let parent expectation handle the mock method.
-            return self.mockMethod.__getattr__(name)
+            return Expectation.__getattr__(self, name)
 
     def __call__(self, *args, **kwargs):
         if self.mockArgExpectation.isExpectedArgs(*args, **kwargs):              
@@ -207,9 +209,6 @@ class CallNotExpected(Expectation):
     def mockVerify(self):   
         assert not self.mockIsCalled, "Method %s was called" % \
             (self.mockMethod.mockMethodName)
-
-    def __getattr__(self,name):
-        return self.mockMethod.__getattr__(name)
 
     def __call__(self, *args, **kwargs):
         self.mockIsCalled = True
