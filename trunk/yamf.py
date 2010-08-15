@@ -2,9 +2,7 @@ import types
 
 class NullObject(object):
 
-    def __getattr__(self, name):
-        return NullObject()
-
+    def __getattr__(self, name): return NullObject()
     def __add__(self, *args, **kwargs): return 0
     def __call__(self, *args, **kwargs): pass
     
@@ -32,12 +30,12 @@ class Mock(object):
     """Mock object"""
     
     def __init__(self):
-        self._mockMethods = {}
+        self._mockMethods = {} # functionName:MockMethod
 
     def verify(self):
         """Verifies that all expectation are met. Raises exception
            when expectations are not met."""
-        [method.verify() for method in self._mockMethods.values()]
+        for method in self._mockMethods.values(): method.verify()
 
     def __getattr__(self, name):
         return self._getMockMethod(name)
@@ -64,7 +62,7 @@ class Proxy(object):
         return Proxy(newSubjects)
         
     def __call__(self, *args, **kwargs):
-        [subject(*args, **kwargs) for subject in self.subjects]
+        for subject in self.subjects: subject(*args, **kwargs)
         
 class MockArray(Mock):
     "Array of same mock objects"
@@ -156,12 +154,10 @@ class ArgumentExpectation(ArgumentExpectationBase):
         return self.parentExpectation
 
     def isExpectedArgs(self, *args, **kwargs):
-        if self.mockExpectedArgs:
-            if self.mockExpectedArgs != args:
-                return False
-        if self.mockExpectedKwargs:
-            if self.mockExpectedKwargs != kwargs:
-                return False
+        if self.mockExpectedArgs != args:
+            return False
+        if self.mockExpectedKwargs != kwargs:
+           return False
         return True
 
 class NoArgumentsExpectation(ArgumentExpectationBase):
@@ -228,7 +224,7 @@ class MockMethod(object):
         self.mockArgumentHistory = []
 
     def verify(self):
-        map(lambda expectation: expectation.mockVerify(), self.mockExpectations)
+        for expectation in self.mockExpectations: expectation.mockVerify()
 
     def mockSetReturnValue(self, value):
         self.returnValue = value
@@ -250,8 +246,7 @@ class MockMethod(object):
 
     def __call__(self, *args, **kwargs):
         self.mockArgumentHistory.append((args,kwargs))
-        for expectation in self.mockExpectations:
-            expectation(*args, **kwargs)
+        for expectation in self.mockExpectations: expectation(*args, **kwargs)
 
         self.mockMethodCallable(*args, **kwargs)
         return self.returnValue
