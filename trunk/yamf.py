@@ -1,6 +1,14 @@
 import types
-  
 
+class NullObject(object):
+
+    def __getattr__(self, name):
+        return NullObject()
+
+    def __add__(self, *args, **kwargs): return 0
+    def __call__(self, *args, **kwargs): pass
+    
+    
 class MockModule(object):
     """For mocking module"""
         
@@ -169,15 +177,14 @@ class CallExpectation(Expectation):
     def __init__(self, mockMethod):
         Expectation.__init__(self, mockMethod)
         self.mockArgExpectation = NoArgumentsExpectation(self.mockMethod, self)
-        self.mockCallCountExpectation = None # TODO: NULL object
+        self.mockCallCountExpectation = NullObject()
 
     def mockVerify(self):   
         assert self.mockIsCalled, 'Method %s(%s,%s) was not called' \
             % (self.mockMethod.mockMethodName, self.mockArgExpectation.mockExpectedArgs, \
                self.mockArgExpectation.mockExpectedKwargs)
         
-        if self.mockCallCountExpectation:
-            self.mockCallCountExpectation.mockVerify()
+        self.mockCallCountExpectation.mockVerify()
 
     def __getattr__(self,name):
         if name == 'withArgs':
@@ -198,8 +205,7 @@ class CallExpectation(Expectation):
     def __call__(self, *args, **kwargs):
         if self.mockArgExpectation.isExpectedArgs(*args, **kwargs):              
             self.mockIsCalled = True
-            if self.mockCallCountExpectation:
-                self.mockCallCountExpectation.mockReceivedCalls += 1
+            self.mockCallCountExpectation.mockReceivedCalls += 1
 
 class CallNotExpected(Expectation):
     
@@ -211,16 +217,14 @@ class CallNotExpected(Expectation):
             (self.mockMethod.mockMethodName)
 
     def __call__(self, *args, **kwargs):
-        self.mockIsCalled = True
-
-    
+        self.mockIsCalled = True  
 
 class MockMethod(object):
     
     def __init__(self, methodName=None):
         self.mockMethodName = methodName
         self.mockExpectations = []
-        self.mockMethodCallable = self._nullCallable
+        self.mockMethodCallable = NullObject()
         self.mockArgumentHistory = []
 
     def verify(self):
@@ -257,5 +261,3 @@ class MockMethod(object):
         self.mockExpectations.append(expectation)
         return expectation
 
-    def _nullCallable(self, *args, **kwargs):
-        pass
