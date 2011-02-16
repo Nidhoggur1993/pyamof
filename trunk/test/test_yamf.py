@@ -263,7 +263,7 @@ class TestMockArray(unittest.TestCase):
         mocks = MockArray(5)
         mocks.method.mustBeCalled
         
-        [mock.method() for mock in mocks]
+        for mock in mocks: mock.method() 
         
         mocks.verify()
         
