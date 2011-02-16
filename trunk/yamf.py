@@ -1,5 +1,12 @@
 import types
 
+
+mocks = []
+
+def verify():
+    """Verifies all the mocks"""
+    for mock in mocks: mock.verify()
+
 class NullObject(object):
 
     def __getattr__(self, name): return NullObject()
@@ -31,6 +38,7 @@ class Mock(object):
     
     def __init__(self):
         self._mockMethods = {} # functionName:MockMethod
+        mocks.append(self)
 
     def verify(self):
         """Verifies that all expectation are met. Raises exception

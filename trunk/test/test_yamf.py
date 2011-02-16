@@ -3,6 +3,7 @@ import os
 sys.path.insert(0, os.path.pardir)
 
 import unittest
+import yamf
 from yamf import Mock, MockModule, MockArray
 
 class TestMethodCallExpectations(unittest.TestCase):
@@ -290,6 +291,13 @@ class TestMockArray(unittest.TestCase):
         for mock in mocks: mock.method() 
         
         mocks.verify()
+
+class TestVerifyingManyMocks(unittest.TestCase):
+
+    def testMockFailedVerifcation(self):
+        mock = Mock()
+        mock.method.mustBeCalled
+        self.assertRaises(AssertionError, yamf.verify)
 
 if __name__ == '__main__':
     unittest.main()
