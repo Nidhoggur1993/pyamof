@@ -298,6 +298,28 @@ class TestVerifyingManyMocks(unittest.TestCase):
         mock = Mock()
         mock.method.mustBeCalled
         self.assertRaises(AssertionError, yamf.verify)
-
+        
+class TestMockedClassAssertions(unittest.TestCase):
+    
+    def testMockedClassDoesNotContainAttribute(self):
+        class MockedClass:
+            pass
+        
+        mock = Mock(MockedClass)
+        
+        # assertRaises cannot be used here, because accessing the
+        # attribute already throws the assertion error.
+        try:
+            mock.method
+        except AssertionError:
+            pass
+        
+    def testMockedClassContainsAttribute(self):
+        class MockedClass:
+            def method(self): pass
+        
+        mock = Mock(MockedClass)
+        
+    
 if __name__ == '__main__':
     unittest.main()

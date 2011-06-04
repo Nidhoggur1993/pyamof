@@ -36,7 +36,8 @@ class MockModule(object):
 class Mock(object):
     """Mock object"""
     
-    def __init__(self):
+    def __init__(self, mockedClass=None):
+        self._mockedClass = mockedClass or NullObject()
         self._mockMethods = {} # functionName:MockMethod
         mocks.append(self)
 
@@ -57,6 +58,10 @@ class Mock(object):
         return self._mockMethods[name]
 
     def _createMockMethod(self, name):
+        assert hasattr(self._mockedClass, name), \
+            "[%s] does not contain method [%s]" % \
+            (self._mockedClass.__name__, name)
+            
         mockMethod = MockMethod(name)
         self._mockMethods[name] = mockMethod
         
