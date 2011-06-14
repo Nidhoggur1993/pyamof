@@ -235,12 +235,14 @@ class MockMethod(object):
         self.mockExpectations = []
         self.mockMethodCallable = NullObject()
         self.mockArgumentHistory = []
+        self.returnValues = ReturnValues()
 
     def verify(self):
         for expectation in self.mockExpectations: expectation.mockVerify()
 
-    def mockSetReturnValue(self, value):
-        self.returnValue = value
+    def mockAddReturnValue(self, value):
+        self.returnValues.add(value)
+        return self
     
     def mockMethodToBeCalled(self, method):
         self.mockMethodCallable = method
@@ -251,7 +253,7 @@ class MockMethod(object):
         elif name == 'mustNotBeCalled':
             return self._addExpectation(CallNotExpected)
         elif name == 'returns':
-            return self.mockSetReturnValue
+            return self.mockAddReturnValue
         elif name == 'execute':
             return self.mockMethodToBeCalled
         elif name == 'history':
@@ -262,10 +264,33 @@ class MockMethod(object):
         for expectation in self.mockExpectations: expectation(*args, **kwargs)
 
         self.mockMethodCallable(*args, **kwargs)
-        return self.returnValue
+        return self.returnValues.getNext()
 
     def _addExpectation(self, expectation):
         expectation = expectation(self)
         self.mockExpectations.append(expectation)
         return expectation
-
+    
+class ReturnValues(object):
+    
+    def __init__(self):
+        self._returnValues = []
+        self._currentIndex = 0
+    
+    def add(self, value):
+        self._returnValues.append(value)
+    
+    def getNext(self):
+        if self._returnValues:
+            return self._getNextOrLastValue()
+        else:
+            return None
+    
+    def _getNextOrLastValue(self):
+        if self._currentIndex < len(self._returnValues):
+            value = self._returnValues[self._currentIndex]
+            self._currentIndex+=1
+            return value
+        else:
+            return self._returnValues[-1]
+        

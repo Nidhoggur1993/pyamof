@@ -182,6 +182,13 @@ class TestReturnValue(unittest.TestCase):
 
         self.assertEquals(m.method(1), 1)
         m.verify()
+        
+    def testManyReturnValues(self):
+        m = Mock()
+        m.method.returns(1).returns(2)
+        self.assertEquals(1, m.method())
+        self.assertEquals(2, m.method())
+        self.assertEquals(2, m.method())
 
 class TestExecuting(unittest.TestCase):
         
