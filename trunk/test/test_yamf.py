@@ -306,6 +306,19 @@ class TestVerifyingManyMocks(unittest.TestCase):
         mock.method.mustBeCalled
         self.assertRaises(AssertionError, yamf.verify)
         
+    def testVerifyVerifiesOnlyOnes(self):
+        mock = Mock()
+        mock.method.mustBeCalled
+        self.assertRaises(AssertionError, yamf.verify)
+        yamf.verify()
+        
+    def testMockVerifiedIsNotVerifiedWithGlobalVerify(self):
+        mock = Mock()
+        mock.method.mustBeCalled
+        self.assertRaises(AssertionError, mock.verify)
+        yamf.verify()
+        
+        
 class TestMockedClassAssertions(unittest.TestCase):
     
     def testMockedClassDoesNotContainAttribute(self):

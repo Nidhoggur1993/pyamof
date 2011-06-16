@@ -5,7 +5,11 @@ mocks = []
 
 def verify():
     """Verifies all the mocks"""
-    for mock in mocks: mock.verify()
+    global mocks
+    copyMocks = mocks[:]
+    mocks = []
+    for mock in copyMocks: mock.verify()
+    
 
 class NullObject(object):
 
@@ -44,6 +48,8 @@ class Mock(object):
     def verify(self):
         """Verifies that all expectation are met. Raises exception
            when expectations are not met."""
+        if self in mocks:
+            mocks.remove(self)
         for method in self._mockMethods.values(): method.verify()
 
     def __getattr__(self, name):
