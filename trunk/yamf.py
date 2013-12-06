@@ -23,8 +23,8 @@ class MockModule(object):
         
     def __init__(self, moduleNameOrModule):
         """Module can be given as string or the module itself"""
-        if type(moduleNameOrModule) is types.StringType:
-            self._module = __import__(moduleNameOrModule, globals(), locals(), [], -1)
+        if isinstance(moduleNameOrModule, str):
+            self._module = __import__(moduleNameOrModule, globals(), locals(), [], 0)
         else:
             self._module = moduleNameOrModule
         self._mock = Mock()
